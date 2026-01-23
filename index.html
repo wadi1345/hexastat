@@ -2,14 +2,17 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>屬性強化模擬器 - 唯一屬性版</title>
+    <title>屬性強化模擬器 - 進階功能版</title>
     <style>
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
-        h1 { text-align: center; color: #1a1a1a; margin-bottom: 20px; }
+        h1 { text-align: center; color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
         
-        .header-bar { display: flex; justify-content: space-between; background: #2c3e50; color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
-        .total-cost { color: #ff7675; }
+        /* 雙重花費區塊 */
+        .header-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .rem-box { grid-column: span 2; text-align: center; border-bottom: 1px solid #57606f; padding-bottom: 8px; margin-bottom: 8px; font-size: 18px; }
+        .cost-box { font-size: 14px; display: flex; flex-direction: column; align-items: center; }
+        .cost-val { font-weight: bold; font-size: 18px; color: #ff7675; }
 
         .stat-section { margin-bottom: 20px; padding: 15px; border: 1px solid #dee2e6; border-radius: 10px; background: #fff; border-left: 6px solid #ccc; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -24,12 +27,15 @@
         .value-display { font-size: 13px; color: #636e72; display: flex; justify-content: space-between; font-weight: 500; }
         select { padding: 4px 6px; border-radius: 4px; border: 1px solid #ced4da; font-size: 13px; outline: none; background-color: #f8f9fa; }
 
-        .btn-group { margin-top: 20px; }
-        button { width: 100%; padding: 14px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        /* 按鈕區 */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button { padding: 14px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-up { background: #27ae60; color: white; }
-        .btn-up:hover { background: #219150; }
-        .btn-up:disabled { background: #adb5bd; cursor: not-allowed; }
-        .btn-reset { background: #eb4d4b; color: white; display: none; margin-top: 10px; }
+        .btn-quick { background: #3498db; color: white; }
+        .btn-reset { background: #eb4d4b; color: white; }
+        .btn-clear-total { background: #636e72; color: white; grid-column: span 2; margin-top: 5px; font-size: 12px; padding: 8px; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { background: #adb5bd; cursor: not-allowed; transform: none; }
 
         .log-area { height: 160px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
         .log-item { border-bottom: 1px solid #444; padding: 3px 0; }
@@ -38,19 +44,23 @@
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬 (唯一屬性限制)</h1>
+    <h1>屬性強化模擬器 v3.0</h1>
 
     <div class="header-bar">
-        <span>剩餘機會：<span id="rem">20</span></span>
-        <span>總花費：<span id="cost" class="total-cost">0</span> 碎片</span>
+        <div class="rem-box">剩餘機會：<span id="rem">20</span> / 20</div>
+        <div class="cost-box">
+            <span>本次花費 (可重置)</span>
+            <span id="cost-current" class="cost-val">0</span>
+        </div>
+        <div class="cost-box">
+            <span>總累積花費</span>
+            <span id="cost-total" class="cost-val">0</span>
+        </div>
     </div>
 
     <div class="stat-section" style="border-left-color: #f1c40f;">
         <div class="stat-header">
-            <div class="stat-label">
-                主要：
-                <select id="sel-main" onchange="validateSelection('sel-main')"></select>
-            </div>
+            <div class="stat-label">主要：<select id="sel-main" onchange="swapIfNeeded('sel-main')"></select></div>
             <span id="p-main" class="prob-text">-</span>
         </div>
         <div class="progress-wrapper"><div id="bar-main" class="progress-fill main-fill"></div></div>
@@ -59,10 +69,7 @@
 
     <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
-            <div class="stat-label">
-                附加 A：
-                <select id="sel-s1" onchange="validateSelection('sel-s1')"></select>
-            </div>
+            <div class="stat-label">附加 A：<select id="sel-s1" onchange="swapIfNeeded('sel-s1')"></select></div>
             <span id="p-s1" class="prob-text">-</span>
         </div>
         <div class="progress-wrapper"><div id="bar-s1" class="progress-fill sub-fill"></div></div>
@@ -71,10 +78,7 @@
 
     <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
-            <div class="stat-label">
-                附加 B：
-                <select id="sel-s2" onchange="validateSelection('sel-s2')"></select>
-            </div>
+            <div class="stat-label">附加 B：<select id="sel-s2" onchange="swapIfNeeded('sel-s2')"></select></div>
             <span id="p-s2" class="prob-text">-</span>
         </div>
         <div class="progress-wrapper"><div id="bar-s2" class="progress-fill sub-fill"></div></div>
@@ -82,8 +86,10 @@
     </div>
 
     <div class="btn-group">
-        <button id="up-btn" class="btn-up" onclick="doUpgrade()">進行強化</button>
-        <button id="reset-btn" class="btn-reset" onclick="doReset()">重置模擬 (RESET)</button>
+        <button id="btn-up" class="btn-up" onclick="doUpgrade()">單次強化</button>
+        <button id="btn-quick" class="btn-quick" onclick="quickUpgrade()">快速強化 20 次</button>
+        <button id="btn-reset" class="btn-reset" onclick="resetSim()">重置模擬</button>
+        <button class="btn-clear-total" onclick="clearTotalCost()">清除總累積花費</button>
     </div>
 
     <div class="log-area" id="log"></div>
@@ -91,12 +97,9 @@
 
 <script>
     const options = [
-        { id: "atk", name: "物理/魔法攻擊力" },
-        { id: "dmg", name: "物理/魔法傷害" },
-        { id: "crit", name: "致命攻擊傷害" },
-        { id: "max", name: "最大傷害" },
-        { id: "final", name: "最終傷害" },
-        { id: "ied", name: "無視防禦率" }
+        { id: "atk", name: "物理/魔法攻擊力" }, { id: "dmg", name: "物理/魔法傷害" },
+        { id: "crit", name: "致命攻擊傷害" }, { id: "max", name: "最大傷害" },
+        { id: "final", name: "最終傷害" }, { id: "ied", name: "無視防禦率" }
     ];
 
     const dataTable = {
@@ -104,7 +107,7 @@
             atk: [0, 350, 500, 700, 900, 1100, 1400, 1700, 2200, 2700, 3400],
             dmg: [0, "1.9%", "2.7%", "3.8%", "4.9%", "6.0%", "7.6%", "9.2%", "11.9%", "14.6%", "18.4%"],
             crit: [0, "1.8%", "2.6%", "3.6%", "4.6%", "5.6%", "7.1%", "8.6%", "11.1%", "13.6%", "17.1%"],
-            max: [0, "10,000,000", "20,000,000", "30,000,000", "45,000,000", "60,000,000", "75,000,000", "95,000,000", "125,000,000", "180,000,000", "250,000,000"],
+            max: [0, "10M", "20M", "30M", "45M", "60M", "75M", "95M", "125M", "180M", "250M"],
             final: [0, "1.2%", "1.7%", "2.4%", "3.1%", "3.8%", "4.8%", "5.8%", "7.5%", "9.2%", "11.6%"],
             ied: [0, "1.0%", "1.4%", "2.0%", "2.6%", "3.2%", "4.1%", "5.0%", "6.5%", "8.0%", "10.1%"]
         },
@@ -112,44 +115,37 @@
             atk: [0, 175, 250, 350, 450, 550, 700, 850, 1100, 1350, 1700],
             dmg: [0, "1.0%", "1.4%", "1.9%", "2.5%", "3.0%", "3.8%", "4.6%", "6.0%", "7.3%", "9.2%"],
             crit: [0, "0.9%", "1.3%", "1.8%", "2.3%", "2.8%", "3.6%", "4.3%", "5.6%", "6.8%", "8.6%"],
-            max: [0, "5,000,000", "10,000,000", "15,000,000", "22,500,000", "30,000,000", "37,500,000", "47,500,000", "62,500,000", "90,000,000", "125,000,000"],
+            max: [0, "5M", "10M", "15M", "22.5M", "30M", "37.5M", "47.5M", "62.5M", "90M", "125M"],
             final: [0, "0.6%", "0.9%", "1.2%", "1.6%", "1.9%", "2.4%", "2.9%", "3.8%", "4.6%", "5.8%"],
             ied: [0, "0.5%", "0.7%", "1.0%", "1.3%", "1.6%", "2.1%", "2.5%", "3.3%", "4.0%", "5.1%"]
         }
     };
 
-    let rem = 20, cost = 0, lv = { main: 0, s1: 0, s2: 0 };
-    let lastValues = { 'sel-main': '', 'sel-s1': '', 'sel-s2': '' };
+    let rem = 20, currentCost = 0, totalCost = 0, lv = { main: 0, s1: 0, s2: 0 };
+    let selHistory = { 'sel-main': 'atk', 'sel-s1': 'dmg', 'sel-s2': 'crit' };
 
-    function initSelects() {
-        const ids = ['sel-main', 'sel-s1', 'sel-s2'];
-        ids.forEach((id, index) => {
+    function init() {
+        ['sel-main', 'sel-s1', 'sel-s2'].forEach((id, i) => {
             const el = document.getElementById(id);
-            options.forEach(opt => {
-                const o = document.createElement('option');
-                o.value = opt.id;
-                o.text = opt.name;
-                el.appendChild(o);
-            });
-            el.selectedIndex = index;
-            lastValues[id] = el.value;
+            options.forEach(opt => el.add(new Option(opt.name, opt.id)));
+            el.value = Object.values(selHistory)[i];
         });
+        render();
     }
 
-    function validateSelection(changedId) {
+    // 自動交換邏輯
+    function swapIfNeeded(changedId) {
         const ids = ['sel-main', 'sel-s1', 'sel-s2'];
-        const currentEl = document.getElementById(changedId);
-        const otherIds = ids.filter(id => id !== changedId);
-        
-        const isDuplicate = otherIds.some(id => document.getElementById(id).value === currentEl.value);
+        const newVal = document.getElementById(changedId).value;
+        const otherId = ids.find(id => id !== changedId && document.getElementById(id).value === newVal);
 
-        if (isDuplicate) {
-            alert("屬性不能重複選取！");
-            currentEl.value = lastValues[changedId];
-        } else {
-            lastValues[changedId] = currentEl.value;
-            render();
+        if (otherId) {
+            // 將重複的那格換成當前這格原本的值
+            document.getElementById(otherId).value = selHistory[changedId];
+            selHistory[otherId] = document.getElementById(otherId).value;
         }
+        selHistory[changedId] = newVal;
+        render();
     }
 
     function getLogic(m_lv) {
@@ -161,70 +157,79 @@
         else { p = 0.05; c = 50; }
         if (m_lv >= 10) p = 0;
         let s1ok = lv.s1 < 10, s2ok = lv.s2 < 10;
-        let count = (s1ok?1:0) + (s2ok?1:0);
-        let sp = count > 0 ? (1 - p) / count : 0;
+        let cnt = (s1ok?1:0) + (s2ok?1:0);
+        let sp = cnt > 0 ? (1 - p) / cnt : 0;
         return { mp: p, sp: sp, cost: c };
     }
 
     function render() {
         const info = getLogic(lv.main);
         document.getElementById('rem').innerText = rem;
-        document.getElementById('cost').innerText = cost;
+        document.getElementById('cost-current').innerText = currentCost;
+        document.getElementById('cost-total').innerText = totalCost;
 
-        const update = (key, curLv, prob, isMain) => {
-            const type = document.getElementById('sel-' + key).value;
-            const table = isMain ? dataTable.main : dataTable.sub;
-            document.getElementById('bar-' + key).style.width = (curLv * 10) + '%';
-            document.getElementById('lv-' + key).innerText = `LV ${curLv}`;
-            document.getElementById('val-' + key).innerText = `加成: ${table[type][curLv]}`;
-            document.getElementById('p-' + key).innerText = `機率: ${(prob * 100).toFixed(1)}%`;
+        const up = (k, cl, pr, isM) => {
+            const type = document.getElementById('sel-' + k).value;
+            const table = isM ? dataTable.main : dataTable.sub;
+            document.getElementById('bar-' + k).style.width = (cl * 10) + '%';
+            document.getElementById('lv-' + k).innerText = `LV ${cl}`;
+            document.getElementById('val-' + k).innerText = `加成: ${table[type][cl]}`;
+            document.getElementById('p-' + k).innerText = `機率: ${(pr * 100).toFixed(1)}%`;
         };
+        up('main', lv.main, info.mp, true);
+        up('s1', lv.s1, info.sp, false);
+        up('s2', lv.s2, info.sp, false);
 
-        update('main', lv.main, info.mp, true);
-        update('s1', lv.s1, info.sp, false);
-        update('s2', lv.s2, info.sp, false);
-
-        if (rem <= 0) {
-            document.getElementById('up-btn').disabled = true;
-            document.getElementById('reset-btn').style.display = 'block';
-        }
+        const ended = rem <= 0;
+        document.getElementById('btn-up').disabled = ended;
+        document.getElementById('btn-quick').disabled = ended;
     }
 
-    function doUpgrade() {
+    function doUpgrade(isSilent = false) {
         if (rem <= 0) return;
         const info = getLogic(lv.main);
         const r = Math.random();
-        let targetName = "";
-        cost += info.cost; rem--;
+        currentCost += info.cost; totalCost += info.cost; rem--;
 
-        if (r < info.mp) { 
-            lv.main++; 
-            targetName = options.find(o => o.id === document.getElementById('sel-main').value).name;
-        } else if (r < info.mp + info.sp && lv.s1 < 10) { 
-            lv.s1++; 
-            targetName = options.find(o => o.id === document.getElementById('sel-s1').value).name + " (附加A)";
-        } else if (lv.s2 < 10) { 
-            lv.s2++; 
-            targetName = options.find(o => o.id === document.getElementById('sel-s2').value).name + " (附加B)";
+        let hit = "";
+        if (r < info.mp) { lv.main++; hit = document.getElementById('sel-main').selectedOptions[0].text; }
+        else if (r < info.mp + info.sp && lv.s1 < 10) { lv.s1++; hit = "附加A: " + document.getElementById('sel-s1').selectedOptions[0].text; }
+        else if (lv.s2 < 10) { lv.s2++; hit = "附加B: " + document.getElementById('sel-s2').selectedOptions[0].text; }
+
+        if (!isSilent) {
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerHTML = `[Step ${20-rem}] <span style="color:#2ecc71">成功</span> -> ${hit} (-${info.cost})`;
+            document.getElementById('log').prepend(item);
+            render();
         }
+    }
 
+    function quickUpgrade() {
+        const startNum = 20 - rem + 1;
+        while (rem > 0) doUpgrade(true);
         const item = document.createElement('div');
         item.className = 'log-item';
-        item.innerHTML = `[${20-rem}] <span style="color:#2ecc71">成功</span> -> ${targetName} (-${info.cost})`;
+        item.style.color = '#f1c40f';
+        item.innerHTML = `[快速強化] 已完成剩餘所有次數。總花費增加。`;
         document.getElementById('log').prepend(item);
         render();
     }
 
-    function doReset() {
-        rem = 20; cost = 0; lv = { main: 0, s1: 0, s2: 0 };
-        document.getElementById('log').innerHTML = '';
-        document.getElementById('up-btn').disabled = false;
-        document.getElementById('reset-btn').style.display = 'none';
+    function resetSim() {
+        rem = 20; currentCost = 0; lv = { main: 0, s1: 0, s2: 0 };
+        document.getElementById('log').innerHTML = '<div class="log-item">模擬已重置。</div>';
         render();
     }
 
-    initSelects();
-    render();
+    function clearTotalCost() {
+        if(confirm("確定要清除「總累積花費」嗎？這不會重置目前的強化狀態。")) {
+            totalCost = 0;
+            render();
+        }
+    }
+
+    init();
 </script>
 
 </body>
