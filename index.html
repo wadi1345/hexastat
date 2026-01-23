@@ -2,172 +2,172 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>屬性強化模擬器 - 數據實裝版</title>
+    <title>屬性強化模擬器 - 全自選數據版</title>
     <style>
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f5f7f9; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 100%; max-width: 650px; }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 22px; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
+        h1 { text-align: center; color: #1a1a1a; margin-bottom: 20px; }
         
-        .header-bar { display: flex; justify-content: space-between; background: #34495e; color: white; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .header-bar { display: flex; justify-content: space-between; background: #2c3e50; color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
         .total-cost { color: #ff7675; }
 
-        .stat-section { margin-bottom: 20px; padding: 15px; border: 1px solid #e1e8ed; border-radius: 10px; background: #fff; }
+        .stat-section { margin-bottom: 20px; padding: 15px; border: 1px solid #dee2e6; border-radius: 10px; background: #fff; border-left: 6px solid #ccc; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .stat-title { font-weight: bold; font-size: 16px; color: #34495e; }
-        .prob-text { font-size: 13px; color: #3498db; font-weight: 600; }
+        .stat-label { font-weight: bold; font-size: 15px; color: #34495e; }
+        .prob-text { font-size: 13px; color: #0984e3; font-weight: bold; }
 
-        /* 進度條設計 */
-        .progress-wrapper { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin: 10px 0; position: relative; border: 1px solid #ddd; }
-        .progress-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
+        /* 進度條 */
+        .progress-wrapper { background: #e9ecef; height: 14px; border-radius: 7px; overflow: hidden; margin: 10px 0; border: 1px solid #dee2e6; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.3s ease-out; }
         .main-fill { background: linear-gradient(90deg, #f1c40f, #f39c12); }
         .sub-fill { background: linear-gradient(90deg, #3498db, #2980b9); }
         
-        .value-display { font-size: 14px; color: #57606f; display: flex; justify-content: space-between; }
-        select { padding: 4px 8px; border-radius: 4px; border: 1px solid #ccd1d9; font-size: 14px; outline: none; }
+        .value-display { font-size: 13px; color: #636e72; display: flex; justify-content: space-between; font-weight: 500; }
+        select { padding: 4px 6px; border-radius: 4px; border: 1px solid #ced4da; font-size: 13px; outline: none; background-color: #f8f9fa; }
 
-        .btn-group { margin-top: 25px; }
+        .btn-group { margin-top: 20px; }
         button { width: 100%; padding: 14px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-up { background: #27ae60; color: white; margin-bottom: 10px; }
+        .btn-up { background: #27ae60; color: white; }
         .btn-up:hover { background: #219150; }
-        .btn-up:disabled { background: #ced6e0; cursor: not-allowed; }
-        .btn-reset { background: #eb4d4b; color: white; display: none; }
+        .btn-up:disabled { background: #adb5bd; cursor: not-allowed; }
+        .btn-reset { background: #eb4d4b; color: white; display: none; margin-top: 10px; }
 
-        .log-area { height: 180px; overflow-y: auto; background: #2f3542; color: #f1f2f6; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin-top: 20px; }
-        .log-item { border-bottom: 1px solid #57606f; padding: 4px 0; }
+        .log-area { height: 160px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
+        .log-item { border-bottom: 1px solid #444; padding: 3px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>HEXA 屬性模擬 (圖片數據版)</h1>
+    <h1>屬性強化模擬 (全自選)</h1>
 
     <div class="header-bar">
         <span>剩餘機會：<span id="rem">20</span></span>
-        <span>目前總花費：<span id="cost" class="total-cost">0</span> 碎片</span>
+        <span>總花費：<span id="cost" class="total-cost">0</span> 碎片</span>
     </div>
 
-    <div class="stat-section" style="border-top: 4px solid #f1c40f;">
+    <div class="stat-section" style="border-left-color: #f1c40f;">
         <div class="stat-header">
-            <div class="stat-title">
+            <div class="stat-label">
                 主要：
-                <select id="main-select" onchange="updateView()">
-                    <option value="atk">物理/魔法攻擊力</option>
-                    <option value="dmg">物理/魔法傷害</option>
-                    <option value="crit">致命攻擊傷害</option>
-                    <option value="max">最大傷害</option>
-                    <option value="final">最終傷害</option>
-                    <option value="ied">無視防禦率</option>
-                </select>
+                <select id="sel-main" onchange="render()"></select>
             </div>
             <span id="p-main" class="prob-text">-</span>
         </div>
-        <div class="progress-wrapper">
-            <div id="bar-main" class="progress-fill main-fill"></div>
-        </div>
-        <div class="value-display">
-            <span id="lv-main">等級: 0</span>
-            <span id="val-main">提升數值: 0</span>
-        </div>
+        <div class="progress-wrapper"><div id="bar-main" class="progress-fill main-fill"></div></div>
+        <div class="value-display"><span id="lv-main">LV 0</span><span id="val-main">加成: 0</span></div>
     </div>
 
-    <div class="stat-section" style="border-top: 4px solid #3498db;">
+    <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
-            <span class="stat-title">附加 A：<small>(固定設定：攻擊力)</small></span>
+            <div class="stat-label">
+                附加 A：
+                <select id="sel-s1" onchange="render()"></select>
+            </div>
             <span id="p-s1" class="prob-text">-</span>
         </div>
-        <div class="progress-wrapper">
-            <div id="bar-s1" class="progress-fill sub-fill"></div>
-        </div>
-        <div class="value-display">
-            <span id="lv-s1">等級: 0</span>
-            <span id="val-s1">提升數值: 0</span>
-        </div>
+        <div class="progress-wrapper"><div id="bar-s1" class="progress-fill sub-fill"></div></div>
+        <div class="value-display"><span id="lv-s1">LV 0</span><span id="val-s1">加成: 0</span></div>
     </div>
 
-    <div class="stat-section" style="border-top: 4px solid #3498db;">
+    <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
-            <span class="stat-title">附加 B：<small>(固定設定：傷害)</small></span>
+            <div class="stat-label">
+                附加 B：
+                <select id="sel-s2" onchange="render()"></select>
+            </div>
             <span id="p-s2" class="prob-text">-</span>
         </div>
-        <div class="progress-wrapper">
-            <div id="bar-s2" class="progress-fill sub-fill"></div>
-        </div>
-        <div class="value-display">
-            <span id="lv-s2">等級: 0</span>
-            <span id="val-s2">提升數值: 0%</span>
-        </div>
+        <div class="progress-wrapper"><div id="bar-s2" class="progress-fill sub-fill"></div></div>
+        <div class="value-display"><span id="lv-s2">LV 0</span><span id="val-s2">加成: 0</span></div>
     </div>
 
     <div class="btn-group">
-        <button id="up-btn" class="btn-up" onclick="executeUpgrade()">進行強化</button>
-        <button id="reset-btn" class="btn-reset" onclick="executeReset()">重置模擬 (RESET)</button>
+        <button id="up-btn" class="btn-up" onclick="doUpgrade()">進行強化</button>
+        <button id="reset-btn" class="btn-reset" onclick="doReset()">重置模擬 (RESET)</button>
     </div>
 
-    <div class="log-area" id="log">
-        <div class="log-item">> 系統就緒，圖片數據已載入。</div>
-    </div>
+    <div class="log-area" id="log"></div>
 </div>
 
 <script>
-    // 依據圖片手打載入的數據表
-    const dataTable = {
+    // 圖片中的完整數據表
+    const options = [
+        { id: "atk", name: "物理/魔法攻擊力" },
+        { id: "dmg", name: "物理/魔法傷害" },
+        { id: "crit", name: "致命攻擊傷害" },
+        { id: "max", name: "最大傷害" },
+        { id: "final", name: "最終傷害" },
+        { id: "ied", name: "無視防禦率" }
+    ];
+
+    const data = {
         main: {
             atk: [0, 350, 500, 700, 900, 1100, 1400, 1700, 2200, 2700, 3400],
             dmg: [0, "1.9%", "2.7%", "3.8%", "4.9%", "6.0%", "7.6%", "9.2%", "11.9%", "14.6%", "18.4%"],
             crit: [0, "1.8%", "2.6%", "3.6%", "4.6%", "5.6%", "7.1%", "8.6%", "11.1%", "13.6%", "17.1%"],
-            max: [0, "10M", "20M", "30M", "45M", "60M", "75M", "95M", "125M", "180M", "250M"],
+            max: [0, "10,000,000", "20,000,000", "30,000,000", "45,000,000", "60,000,000", "75,000,000", "95,000,000", "125,000,000", "180,000,000", "250,000,000"],
             final: [0, "1.2%", "1.7%", "2.4%", "3.1%", "3.8%", "4.8%", "5.8%", "7.5%", "9.2%", "11.6%"],
             ied: [0, "1.0%", "1.4%", "2.0%", "2.6%", "3.2%", "4.1%", "5.0%", "6.5%", "8.0%", "10.1%"]
         },
         sub: {
             atk: [0, 175, 250, 350, 450, 550, 700, 850, 1100, 1350, 1700],
-            dmg: [0, "1.0%", "1.4%", "1.9%", "2.5%", "3.0%", "3.8%", "4.6%", "6.0%", "7.3%", "9.2%"]
+            dmg: [0, "1.0%", "1.4%", "1.9%", "2.5%", "3.0%", "3.8%", "4.6%", "6.0%", "7.3%", "9.2%"],
+            crit: [0, "0.9%", "1.3%", "1.8%", "2.3%", "2.8%", "3.6%", "4.3%", "5.6%", "6.8%", "8.6%"],
+            max: [0, "5,000,000", "10,000,000", "15,000,000", "22,500,000", "30,000,000", "37,500,000", "47,500,000", "62,500,000", "90,000,000", "125,000,000"],
+            final: [0, "0.6%", "0.9%", "1.2%", "1.6%", "1.9%", "2.4%", "2.9%", "3.8%", "4.6%", "5.8%"],
+            ied: [0, "0.5%", "0.7%", "1.0%", "1.3%", "1.6%", "2.1%", "2.5%", "3.3%", "4.0%", "5.1%"]
         }
     };
 
-    let rem = 20;
-    let cost = 0;
-    let curLv = { main: 0, s1: 0, s2: 0 };
+    let rem = 20, cost = 0, lv = { main: 0, s1: 0, s2: 0 };
 
-    function getProbCost(m_lv) {
+    // 初始化下拉選單
+    function initSelects() {
+        const ids = ['sel-main', 'sel-s1', 'sel-s2'];
+        ids.forEach((id, index) => {
+            const el = document.getElementById(id);
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.id;
+                o.text = opt.name;
+                el.appendChild(o);
+            });
+            el.selectedIndex = index % options.length; // 預設選不同的
+        });
+    }
+
+    function getLogic(m_lv) {
         let p, c;
         if (m_lv <= 2) { p = 0.35; c = 10; }
         else if (m_lv <= 6) { p = 0.20; c = 20; }
         else if (m_lv === 7) { p = 0.15; c = 30; }
         else if (m_lv === 8) { p = 0.10; c = 40; }
         else { p = 0.05; c = 50; }
-        
         if (m_lv >= 10) p = 0;
-        let s1a = curLv.s1 < 10, s2a = curLv.s2 < 10;
-        let count = (s1a?1:0) + (s2a?1:0);
+        let s1ok = lv.s1 < 10, s2ok = lv.s2 < 10;
+        let count = (s1ok?1:0) + (s2ok?1:0);
         let sp = count > 0 ? (1 - p) / count : 0;
         return { mp: p, sp: sp, cost: c };
     }
 
-    function updateView() {
-        const type = document.getElementById('main-select').value;
-        const info = getProbCost(curLv.main);
-        
+    function render() {
+        const info = getLogic(lv.main);
         document.getElementById('rem').innerText = rem;
         document.getElementById('cost').innerText = cost;
 
-        // 主要屬性更新
-        document.getElementById('lv-main').innerText = `等級: ${curLv.main}`;
-        document.getElementById('bar-main').style.width = (curLv.main * 10) + '%';
-        document.getElementById('val-main').innerText = `提升數值: ${dataTable.main[type][curLv.main]}`;
-        document.getElementById('p-main').innerText = `機率: ${(info.mp * 100).toFixed(1)}%`;
+        const update = (key, curLv, prob, isMain) => {
+            const type = document.getElementById('sel-' + key).value;
+            const table = isMain ? data.main : data.sub;
+            document.getElementById('bar-' + key).style.width = (curLv * 10) + '%';
+            document.getElementById('lv-' + key).innerText = `LV ${curLv}`;
+            document.getElementById('val-' + key).innerText = `加成: ${table[type][curLv]}`;
+            document.getElementById('p-' + key).innerText = `機率: ${(prob * 100).toFixed(1)}%`;
+        };
 
-        // 附加 A (攻擊)
-        document.getElementById('lv-s1').innerText = `等級: ${curLv.s1}`;
-        document.getElementById('bar-s1').style.width = (curLv.s1 * 10) + '%';
-        document.getElementById('val-s1').innerText = `提升數值: ${dataTable.sub.atk[curLv.s1]}`;
-        document.getElementById('p-s1').innerText = `機率: ${(info.sp * 100).toFixed(1)}%`;
-
-        // 附加 B (傷害)
-        document.getElementById('lv-s2').innerText = `等級: ${curLv.s2}`;
-        document.getElementById('bar-s2').style.width = (curLv.s2 * 10) + '%';
-        document.getElementById('val-s2').innerText = `提升數值: ${dataTable.sub.dmg[curLv.s2]}`;
-        document.getElementById('p-s2').innerText = `機率: ${(info.sp * 100).toFixed(1)}%`;
+        update('main', lv.main, info.mp, true);
+        update('s1', lv.s1, info.sp, false);
+        update('s2', lv.s2, info.sp, false);
 
         if (rem <= 0) {
             document.getElementById('up-btn').disabled = true;
@@ -175,41 +175,34 @@
         }
     }
 
-    function executeUpgrade() {
+    function doUpgrade() {
         if (rem <= 0) return;
-        const info = getProbCost(curLv.main);
+        const info = getLogic(lv.main);
         const r = Math.random();
         let target = "";
+        cost += info.cost; rem--;
 
-        cost += info.cost;
-        rem--;
+        if (r < info.mp) { lv.main++; target = "主要屬性"; }
+        else if (r < info.mp + info.sp && lv.s1 < 10) { lv.s1++; target = "附加屬性 A"; }
+        else if (lv.s2 < 10) { lv.s2++; target = "附加屬性 B"; }
 
-        if (r < info.mp) {
-            curLv.main++; target = "主要屬性";
-        } else if (r < info.mp + info.sp && curLv.s1 < 10) {
-            curLv.s1++; target = "附加屬性 A";
-        } else if (curLv.s2 < 10) {
-            curLv.s2++; target = "附加屬性 B";
-        }
-
-        const logWin = document.getElementById('log');
         const item = document.createElement('div');
         item.className = 'log-item';
-        item.innerHTML = `[Step ${20-rem}] <span style="color:#2ecc71">強化成功</span> -> ${target} (消耗: ${info.cost})`;
-        logWin.prepend(item);
-        
-        updateView();
+        item.innerHTML = `[${20-rem}] 強化 -> <span style="color:#2ecc71">${target}</span> (-${info.cost})`;
+        document.getElementById('log').prepend(item);
+        render();
     }
 
-    function executeReset() {
-        rem = 20; cost = 0; curLv = { main: 0, s1: 0, s2: 0 };
-        document.getElementById('log').innerHTML = '<div class="log-item">> 模擬器已重置。</div>';
+    function doReset() {
+        rem = 20; cost = 0; lv = { main: 0, s1: 0, s2: 0 };
+        document.getElementById('log').innerHTML = '';
         document.getElementById('up-btn').disabled = false;
         document.getElementById('reset-btn').style.display = 'none';
-        updateView();
+        render();
     }
 
-    updateView();
+    initSelects();
+    render();
 </script>
 
 </body>
