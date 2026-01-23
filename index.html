@@ -2,185 +2,214 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>遊戲強化機率模擬器 v2.1</title>
+    <title>屬性強化模擬器 - 數據實裝版</title>
     <style>
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 600px; }
-        h1 { text-align: center; color: #1a1a1a; margin-bottom: 25px; }
-        .stats-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .stat-card { padding: 15px; border-radius: 10px; background: #f8f9fa; text-align: center; border: 1px solid #dee2e6; }
-        .stat-card.main { background: #fff9db; border: 2px solid #fab005; }
-        .level { font-size: 28px; font-weight: bold; display: block; color: #2d3436; }
-        .prob-tag { font-size: 13px; color: #0984e3; margin-top: 5px; display: block; font-weight: 500; }
-        .info-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: #e7f5ff; border-radius: 8px; font-weight: bold; }
-        .controls { text-align: center; margin-top: 20px; }
-        button { padding: 12px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 8px; transition: all 0.2s; font-weight: bold; }
-        .btn-upgrade { background-color: #228be6; color: white; width: 100%; }
-        .btn-upgrade:hover { background-color: #1c7ed6; transform: translateY(-2px); }
-        .btn-reset { background-color: #fa5252; color: white; display: none; margin-top: 15px; width: 100%; }
-        .log-container { margin-top: 25px; }
-        .log-title { font-size: 14px; color: #868e96; margin-bottom: 8px; }
-        .log { height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 12px; font-family: monospace; background: #fafafa; border-radius: 8px; }
-        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #f1f1f1; padding-bottom: 4px; font-size: 13px; }
-        .success-text { color: #40c057; font-weight: bold; }
-        .highlight-cost { color: #e03131; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f5f7f9; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 100%; max-width: 650px; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 22px; }
+        
+        .header-bar { display: flex; justify-content: space-between; background: #34495e; color: white; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .total-cost { color: #ff7675; }
+
+        .stat-section { margin-bottom: 20px; padding: 15px; border: 1px solid #e1e8ed; border-radius: 10px; background: #fff; }
+        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .stat-title { font-weight: bold; font-size: 16px; color: #34495e; }
+        .prob-text { font-size: 13px; color: #3498db; font-weight: 600; }
+
+        /* 進度條設計 */
+        .progress-wrapper { background: #eee; height: 16px; border-radius: 8px; overflow: hidden; margin: 10px 0; position: relative; border: 1px solid #ddd; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
+        .main-fill { background: linear-gradient(90deg, #f1c40f, #f39c12); }
+        .sub-fill { background: linear-gradient(90deg, #3498db, #2980b9); }
+        
+        .value-display { font-size: 14px; color: #57606f; display: flex; justify-content: space-between; }
+        select { padding: 4px 8px; border-radius: 4px; border: 1px solid #ccd1d9; font-size: 14px; outline: none; }
+
+        .btn-group { margin-top: 25px; }
+        button { width: 100%; padding: 14px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-up { background: #27ae60; color: white; margin-bottom: 10px; }
+        .btn-up:hover { background: #219150; }
+        .btn-up:disabled { background: #ced6e0; cursor: not-allowed; }
+        .btn-reset { background: #eb4d4b; color: white; display: none; }
+
+        .log-area { height: 180px; overflow-y: auto; background: #2f3542; color: #f1f2f6; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin-top: 20px; }
+        .log-item { border-bottom: 1px solid #57606f; padding: 4px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬</h1>
-    
-    <div class="info-bar">
-        <span>次數剩餘: <span id="remaining">20</span></span>
-        <span>總花費: <span id="total-cost" class="highlight-cost">0</span> 碎片</span>
+    <h1>HEXA 屬性模擬 (圖片數據版)</h1>
+
+    <div class="header-bar">
+        <span>剩餘機會：<span id="rem">20</span></span>
+        <span>目前總花費：<span id="cost" class="total-cost">0</span> 碎片</span>
     </div>
 
-    <div class="stats-board">
-        <div class="stat-card main">
-            <strong>主要屬性</strong>
-            <span class="level" id="lv-main">0</span>
-            <span class="prob-tag" id="prob-main">-</span>
+    <div class="stat-section" style="border-top: 4px solid #f1c40f;">
+        <div class="stat-header">
+            <div class="stat-title">
+                主要：
+                <select id="main-select" onchange="updateView()">
+                    <option value="atk">物理/魔法攻擊力</option>
+                    <option value="dmg">物理/魔法傷害</option>
+                    <option value="crit">致命攻擊傷害</option>
+                    <option value="max">最大傷害</option>
+                    <option value="final">最終傷害</option>
+                    <option value="ied">無視防禦率</option>
+                </select>
+            </div>
+            <span id="p-main" class="prob-text">-</span>
         </div>
-        <div class="stat-card">
-            附加 A
-            <span class="level" id="lv-sub1">0</span>
-            <span class="prob-tag" id="prob-sub1">-</span>
+        <div class="progress-wrapper">
+            <div id="bar-main" class="progress-fill main-fill"></div>
         </div>
-        <div class="stat-card">
-            附加 B
-            <span class="level" id="lv-sub2">0</span>
-            <span class="prob-tag" id="prob-sub2">-</span>
+        <div class="value-display">
+            <span id="lv-main">等級: 0</span>
+            <span id="val-main">提升數值: 0</span>
         </div>
     </div>
 
-    <div class="controls">
-        <button id="upgrade-btn" class="btn-upgrade" onclick="performUpgrade()">點擊強化</button>
-        <button id="reset-btn" class="btn-reset" onclick="resetGame()">重新開始 (RESET)</button>
+    <div class="stat-section" style="border-top: 4px solid #3498db;">
+        <div class="stat-header">
+            <span class="stat-title">附加 A：<small>(固定設定：攻擊力)</small></span>
+            <span id="p-s1" class="prob-text">-</span>
+        </div>
+        <div class="progress-wrapper">
+            <div id="bar-s1" class="progress-fill sub-fill"></div>
+        </div>
+        <div class="value-display">
+            <span id="lv-s1">等級: 0</span>
+            <span id="val-s1">提升數值: 0</span>
+        </div>
     </div>
 
-    <div class="log-container">
-        <div class="log-title">強化歷程記錄：</div>
-        <div class="log" id="log"></div>
+    <div class="stat-section" style="border-top: 4px solid #3498db;">
+        <div class="stat-header">
+            <span class="stat-title">附加 B：<small>(固定設定：傷害)</small></span>
+            <span id="p-s2" class="prob-text">-</span>
+        </div>
+        <div class="progress-wrapper">
+            <div id="bar-s2" class="progress-fill sub-fill"></div>
+        </div>
+        <div class="value-display">
+            <span id="lv-s2">等級: 0</span>
+            <span id="val-s2">提升數值: 0%</span>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button id="up-btn" class="btn-up" onclick="executeUpgrade()">進行強化</button>
+        <button id="reset-btn" class="btn-reset" onclick="executeReset()">重置模擬 (RESET)</button>
+    </div>
+
+    <div class="log-area" id="log">
+        <div class="log-item">> 系統就緒，圖片數據已載入。</div>
     </div>
 </div>
 
 <script>
-    let remainingStrikes = 20;
-    let totalCost = 0;
-    let lvMain = 0;
-    let lvSub1 = 0;
-    let lvSub2 = 0;
-
-    function getConfigs(lv) {
-        let mainProb, cost;
-        
-        // 修正後的等級機率與花費邏輯
-        if (lv <= 2) { 
-            mainProb = 0.35; 
-            cost = 10; 
-        } else if (lv <= 6) { 
-            mainProb = 0.20; 
-            cost = 20; 
-        } else if (lv === 7) { 
-            mainProb = 0.15; 
-            cost = 30; 
-        } else if (lv === 8) { 
-            mainProb = 0.10; 
-            cost = 40; 
-        } else { 
-            mainProb = 0.05; 
-            cost = 50; 
+    // 依據圖片手打載入的數據表
+    const dataTable = {
+        main: {
+            atk: [0, 350, 500, 700, 900, 1100, 1400, 1700, 2200, 2700, 3400],
+            dmg: [0, "1.9%", "2.7%", "3.8%", "4.9%", "6.0%", "7.6%", "9.2%", "11.9%", "14.6%", "18.4%"],
+            crit: [0, "1.8%", "2.6%", "3.6%", "4.6%", "5.6%", "7.1%", "8.6%", "11.1%", "13.6%", "17.1%"],
+            max: [0, "10M", "20M", "30M", "45M", "60M", "75M", "95M", "125M", "180M", "250M"],
+            final: [0, "1.2%", "1.7%", "2.4%", "3.1%", "3.8%", "4.8%", "5.8%", "7.5%", "9.2%", "11.6%"],
+            ied: [0, "1.0%", "1.4%", "2.0%", "2.6%", "3.2%", "4.1%", "5.0%", "6.5%", "8.0%", "10.1%"]
+        },
+        sub: {
+            atk: [0, 175, 250, 350, 450, 550, 700, 850, 1100, 1350, 1700],
+            dmg: [0, "1.0%", "1.4%", "1.9%", "2.5%", "3.0%", "3.8%", "4.6%", "6.0%", "7.3%", "9.2%"]
         }
+    };
 
-        // 主要屬性上限
-        if (lv >= 10) mainProb = 0;
+    let rem = 20;
+    let cost = 0;
+    let curLv = { main: 0, s1: 0, s2: 0 };
 
-        // 計算附加屬性 (剩餘機率均分，顯示到小數點第一位)
-        let sub1Available = lvSub1 < 10;
-        let sub2Available = lvSub2 < 10;
-        let activeSubs = (sub1Available ? 1 : 0) + (sub2Available ? 1 : 0);
+    function getProbCost(m_lv) {
+        let p, c;
+        if (m_lv <= 2) { p = 0.35; c = 10; }
+        else if (m_lv <= 6) { p = 0.20; c = 20; }
+        else if (m_lv === 7) { p = 0.15; c = 30; }
+        else if (m_lv === 8) { p = 0.10; c = 40; }
+        else { p = 0.05; c = 50; }
         
-        let subProb = activeSubs > 0 ? (1 - mainProb) / activeSubs : 0;
-
-        return {
-            main: mainProb,
-            sub1: sub1Available ? subProb : 0,
-            sub2: sub2Available ? subProb : 0,
-            cost: cost
-        };
+        if (m_lv >= 10) p = 0;
+        let s1a = curLv.s1 < 10, s2a = curLv.s2 < 10;
+        let count = (s1a?1:0) + (s2a?1:0);
+        let sp = count > 0 ? (1 - p) / count : 0;
+        return { mp: p, sp: sp, cost: c };
     }
 
-    function updateUI() {
-        document.getElementById('remaining').innerText = remainingStrikes;
-        document.getElementById('total-cost').innerText = totalCost;
-        document.getElementById('lv-main').innerText = lvMain;
-        document.getElementById('lv-sub1').innerText = lvSub1;
-        document.getElementById('lv-sub2').innerText = lvSub2;
+    function updateView() {
+        const type = document.getElementById('main-select').value;
+        const info = getProbCost(curLv.main);
+        
+        document.getElementById('rem').innerText = rem;
+        document.getElementById('cost').innerText = cost;
 
-        const cfg = getConfigs(lvMain);
-        // 主要屬性通常是整數，附加屬性顯示到小數點後 1 位
-        document.getElementById('prob-main').innerText = `機率: ${(cfg.main * 100).toFixed(1)}%`;
-        document.getElementById('prob-sub1').innerText = `機率: ${(cfg.sub1 * 100).toFixed(1)}%`;
-        document.getElementById('prob-sub2').innerText = `機率: ${(cfg.sub2 * 100).toFixed(1)}%`;
+        // 主要屬性更新
+        document.getElementById('lv-main').innerText = `等級: ${curLv.main}`;
+        document.getElementById('bar-main').style.width = (curLv.main * 10) + '%';
+        document.getElementById('val-main').innerText = `提升數值: ${dataTable.main[type][curLv.main]}`;
+        document.getElementById('p-main').innerText = `機率: ${(info.mp * 100).toFixed(1)}%`;
 
-        if (remainingStrikes <= 0) {
-            document.getElementById('upgrade-btn').disabled = true;
-            document.getElementById('upgrade-btn').innerText = "次數已耗盡";
+        // 附加 A (攻擊)
+        document.getElementById('lv-s1').innerText = `等級: ${curLv.s1}`;
+        document.getElementById('bar-s1').style.width = (curLv.s1 * 10) + '%';
+        document.getElementById('val-s1').innerText = `提升數值: ${dataTable.sub.atk[curLv.s1]}`;
+        document.getElementById('p-s1').innerText = `機率: ${(info.sp * 100).toFixed(1)}%`;
+
+        // 附加 B (傷害)
+        document.getElementById('lv-s2').innerText = `等級: ${curLv.s2}`;
+        document.getElementById('bar-s2').style.width = (curLv.s2 * 10) + '%';
+        document.getElementById('val-s2').innerText = `提升數值: ${dataTable.sub.dmg[curLv.s2]}`;
+        document.getElementById('p-s2').innerText = `機率: ${(info.sp * 100).toFixed(1)}%`;
+
+        if (rem <= 0) {
+            document.getElementById('up-btn').disabled = true;
             document.getElementById('reset-btn').style.display = 'block';
         }
     }
 
-    function performUpgrade() {
-        if (remainingStrikes <= 0) return;
-
-        const cfg = getConfigs(lvMain);
-        totalCost += cfg.cost;
-        remainingStrikes--;
-
-        const roll = Math.random();
+    function executeUpgrade() {
+        if (rem <= 0) return;
+        const info = getProbCost(curLv.main);
+        const r = Math.random();
         let target = "";
 
-        if (roll < cfg.main) {
-            lvMain++;
-            target = "【主要屬性】";
-        } else if (roll < cfg.main + cfg.sub1) {
-            lvSub1++;
-            target = "附加屬性 A";
-        } else if (roll < cfg.main + cfg.sub1 + cfg.sub2) {
-            lvSub2++;
-            target = "附加屬性 B";
+        cost += info.cost;
+        rem--;
+
+        if (r < info.mp) {
+            curLv.main++; target = "主要屬性";
+        } else if (r < info.mp + info.sp && curLv.s1 < 10) {
+            curLv.s1++; target = "附加屬性 A";
+        } else if (curLv.s2 < 10) {
+            curLv.s2++; target = "附加屬性 B";
         }
 
-        const log = document.getElementById('log');
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        const currentCount = 20 - remainingStrikes;
+        const logWin = document.getElementById('log');
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `[Step ${20-rem}] <span style="color:#2ecc71">強化成功</span> -> ${target} (消耗: ${info.cost})`;
+        logWin.prepend(item);
         
-        if (target !== "") {
-            entry.innerHTML = `Step ${currentCount}: <span class="success-text">強化成功</span> -> ${target} (消耗 ${cfg.cost})`;
-        } else {
-            entry.innerHTML = `Step ${currentCount}: 強化失敗 (屬性已滿)`;
-        }
-        
-        log.prepend(entry);
-        updateUI();
+        updateView();
     }
 
-    function resetGame() {
-        remainingStrikes = 20;
-        totalCost = 0;
-        lvMain = 0;
-        lvSub1 = 0;
-        lvSub2 = 0;
-        document.getElementById('log').innerHTML = '';
-        document.getElementById('upgrade-btn').disabled = false;
-        document.getElementById('upgrade-btn').innerText = "點擊強化";
+    function executeReset() {
+        rem = 20; cost = 0; curLv = { main: 0, s1: 0, s2: 0 };
+        document.getElementById('log').innerHTML = '<div class="log-item">> 模擬器已重置。</div>';
+        document.getElementById('up-btn').disabled = false;
         document.getElementById('reset-btn').style.display = 'none';
-        updateUI();
+        updateView();
     }
 
-    updateUI();
+    updateView();
 </script>
 
 </body>
