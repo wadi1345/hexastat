@@ -2,63 +2,66 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>遊戲強化機率模擬器</title>
+    <title>遊戲強化機率模擬器 v2.1</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-        h1 { text-align: center; color: #333; }
-        .stats-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center; }
-        .stat-card { padding: 15px; border-radius: 8px; background: #e9ecef; }
-        .stat-card.main { background: #ffeaa7; border: 2px solid #fdcb6e; }
-        .level { font-size: 24px; font-weight: bold; display: block; }
-        .info-panel { margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-left: 5px solid #0984e3; }
-        .controls { text-align: center; margin-bottom: 20px; }
-        button { padding: 12px 24px; font-size: 18px; cursor: pointer; border: none; border-radius: 6px; transition: 0.3s; }
-        .btn-upgrade { background-color: #00b894; color: white; }
-        .btn-upgrade:hover { background-color: #00947a; }
-        .btn-upgrade:disabled { background-color: #ccc; cursor: not-allowed; }
-        .btn-reset { background-color: #d63031; color: white; display: none; margin-top: 10px; }
-        .log { height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; font-size: 14px; background: #2d3436; color: #dfe6e9; border-radius: 4px; }
-        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 2px; }
-        .success { color: #55efc4; font-weight: bold; }
-        .cost-summary { font-weight: bold; color: #d63031; margin-top: 10px; text-align: right; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 600px; }
+        h1 { text-align: center; color: #1a1a1a; margin-bottom: 25px; }
+        .stats-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { padding: 15px; border-radius: 10px; background: #f8f9fa; text-align: center; border: 1px solid #dee2e6; }
+        .stat-card.main { background: #fff9db; border: 2px solid #fab005; }
+        .level { font-size: 28px; font-weight: bold; display: block; color: #2d3436; }
+        .prob-tag { font-size: 13px; color: #0984e3; margin-top: 5px; display: block; font-weight: 500; }
+        .info-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: #e7f5ff; border-radius: 8px; font-weight: bold; }
+        .controls { text-align: center; margin-top: 20px; }
+        button { padding: 12px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 8px; transition: all 0.2s; font-weight: bold; }
+        .btn-upgrade { background-color: #228be6; color: white; width: 100%; }
+        .btn-upgrade:hover { background-color: #1c7ed6; transform: translateY(-2px); }
+        .btn-reset { background-color: #fa5252; color: white; display: none; margin-top: 15px; width: 100%; }
+        .log-container { margin-top: 25px; }
+        .log-title { font-size: 14px; color: #868e96; margin-bottom: 8px; }
+        .log { height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 12px; font-family: monospace; background: #fafafa; border-radius: 8px; }
+        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #f1f1f1; padding-bottom: 4px; font-size: 13px; }
+        .success-text { color: #40c057; font-weight: bold; }
+        .highlight-cost { color: #e03131; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>強化模擬測試</h1>
+    <h1>屬性強化模擬</h1>
     
-    <div class="info-panel">
-        <div>剩餘強化次數：<span id="remaining">20</span> / 20</div>
-        <div class="cost-summary">目前總花費：<span id="total-cost">0</span> 碎片</div>
+    <div class="info-bar">
+        <span>次數剩餘: <span id="remaining">20</span></span>
+        <span>總花費: <span id="total-cost" class="highlight-cost">0</span> 碎片</span>
     </div>
 
     <div class="stats-board">
         <div class="stat-card main">
-            主要屬性
+            <strong>主要屬性</strong>
             <span class="level" id="lv-main">0</span>
-            <small id="prob-main">機率: --</small>
+            <span class="prob-tag" id="prob-main">-</span>
         </div>
         <div class="stat-card">
-            附加屬性 A
+            附加 A
             <span class="level" id="lv-sub1">0</span>
-            <small id="prob-sub1">機率: --</small>
+            <span class="prob-tag" id="prob-sub1">-</span>
         </div>
         <div class="stat-card">
-            附加屬性 B
+            附加 B
             <span class="level" id="lv-sub2">0</span>
-            <small id="prob-sub2">機率: --</small>
+            <span class="prob-tag" id="prob-sub2">-</span>
         </div>
     </div>
 
     <div class="controls">
-        <button id="upgrade-btn" class="btn-upgrade" onclick="performUpgrade()">進行強化</button>
-        <button id="reset-btn" class="btn-reset" onclick="resetGame()">重置模擬</button>
+        <button id="upgrade-btn" class="btn-upgrade" onclick="performUpgrade()">點擊強化</button>
+        <button id="reset-btn" class="btn-reset" onclick="resetGame()">重新開始 (RESET)</button>
     </div>
 
-    <div class="log" id="log">
-        <div class="log-entry">系統就緒，請開始點擊強化。</div>
+    <div class="log-container">
+        <div class="log-title">強化歷程記錄：</div>
+        <div class="log" id="log"></div>
     </div>
 </div>
 
@@ -69,20 +72,31 @@
     let lvSub1 = 0;
     let lvSub2 = 0;
 
-    function getProbabilities(lv) {
+    function getConfigs(lv) {
         let mainProb, cost;
-        // 根據目前等級判定機率與花費
-        if (lv < 2) { mainProb = 0.35; cost = 10; }
-        else if (lv < 6) { mainProb = 0.20; cost = 20; }
-        else if (lv < 7) { mainProb = 0.15; cost = 30; }
-        else if (lv < 8) { mainProb = 0.10; cost = 40; }
-        else { mainProb = 0.05; cost = 50; }
+        
+        // 修正後的等級機率與花費邏輯
+        if (lv <= 2) { 
+            mainProb = 0.35; 
+            cost = 10; 
+        } else if (lv <= 6) { 
+            mainProb = 0.20; 
+            cost = 20; 
+        } else if (lv === 7) { 
+            mainProb = 0.15; 
+            cost = 30; 
+        } else if (lv === 8) { 
+            mainProb = 0.10; 
+            cost = 40; 
+        } else { 
+            mainProb = 0.05; 
+            cost = 50; 
+        }
 
-        // 如果主要屬性已滿 10 級，機率歸 0
+        // 主要屬性上限
         if (lv >= 10) mainProb = 0;
 
-        // 計算附加屬性機率（均分剩餘機率）
-        // 檢查附加屬性是否已達上限
+        // 計算附加屬性 (剩餘機率均分，顯示到小數點第一位)
         let sub1Available = lvSub1 < 10;
         let sub2Available = lvSub2 < 10;
         let activeSubs = (sub1Available ? 1 : 0) + (sub2Available ? 1 : 0);
@@ -104,51 +118,52 @@
         document.getElementById('lv-sub1').innerText = lvSub1;
         document.getElementById('lv-sub2').innerText = lvSub2;
 
-        const probs = getProbabilities(lvMain);
-        document.getElementById('prob-main').innerText = `機率: ${Math.round(probs.main * 100)}%`;
-        document.getElementById('prob-sub1').innerText = `機率: ${Math.round(probs.sub1 * 100)}%`;
-        document.getElementById('prob-sub2').innerText = `機率: ${Math.round(probs.sub2 * 100)}%`;
+        const cfg = getConfigs(lvMain);
+        // 主要屬性通常是整數，附加屬性顯示到小數點後 1 位
+        document.getElementById('prob-main').innerText = `機率: ${(cfg.main * 100).toFixed(1)}%`;
+        document.getElementById('prob-sub1').innerText = `機率: ${(cfg.sub1 * 100).toFixed(1)}%`;
+        document.getElementById('prob-sub2').innerText = `機率: ${(cfg.sub2 * 100).toFixed(1)}%`;
 
         if (remainingStrikes <= 0) {
             document.getElementById('upgrade-btn').disabled = true;
-            document.getElementById('reset-btn').style.display = 'inline-block';
+            document.getElementById('upgrade-btn').innerText = "次數已耗盡";
+            document.getElementById('reset-btn').style.display = 'block';
         }
     }
 
     function performUpgrade() {
         if (remainingStrikes <= 0) return;
 
-        const probs = getProbabilities(lvMain);
-        totalCost += probs.cost;
+        const cfg = getConfigs(lvMain);
+        totalCost += cfg.cost;
         remainingStrikes--;
 
         const roll = Math.random();
-        let resultText = "";
         let target = "";
 
-        if (roll < probs.main) {
+        if (roll < cfg.main) {
             lvMain++;
-            target = "主要屬性";
-        } else if (roll < probs.main + probs.sub1) {
+            target = "【主要屬性】";
+        } else if (roll < cfg.main + cfg.sub1) {
             lvSub1++;
             target = "附加屬性 A";
-        } else if (roll < probs.main + probs.sub1 + probs.sub2) {
+        } else if (roll < cfg.main + cfg.sub1 + cfg.sub2) {
             lvSub2++;
             target = "附加屬性 B";
-        } else {
-            resultText = "強化失敗 (所有屬性已滿或異常)";
-        }
-
-        if (target !== "") {
-            resultText = `<span class="success">成功！</span> ${target} 強化等級上升。 (花費: ${probs.cost})`;
         }
 
         const log = document.getElementById('log');
         const entry = document.createElement('div');
         entry.className = 'log-entry';
-        entry.innerHTML = `[第 ${20 - remainingStrikes} 次] ${resultText}`;
+        const currentCount = 20 - remainingStrikes;
+        
+        if (target !== "") {
+            entry.innerHTML = `Step ${currentCount}: <span class="success-text">強化成功</span> -> ${target} (消耗 ${cfg.cost})`;
+        } else {
+            entry.innerHTML = `Step ${currentCount}: 強化失敗 (屬性已滿)`;
+        }
+        
         log.prepend(entry);
-
         updateUI();
     }
 
@@ -158,13 +173,13 @@
         lvMain = 0;
         lvSub1 = 0;
         lvSub2 = 0;
-        document.getElementById('log').innerHTML = '<div class="log-entry">模擬已重置。</div>';
+        document.getElementById('log').innerHTML = '';
         document.getElementById('upgrade-btn').disabled = false;
+        document.getElementById('upgrade-btn').innerText = "點擊強化";
         document.getElementById('reset-btn').style.display = 'none';
         updateUI();
     }
 
-    // 初始化介面
     updateUI();
 </script>
 
