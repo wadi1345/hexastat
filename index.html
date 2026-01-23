@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>屬性強化模擬器 - 全自選數據版</title>
+    <title>屬性強化模擬器 - 唯一屬性版</title>
     <style>
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
@@ -16,7 +16,6 @@
         .stat-label { font-weight: bold; font-size: 15px; color: #34495e; }
         .prob-text { font-size: 13px; color: #0984e3; font-weight: bold; }
 
-        /* 進度條 */
         .progress-wrapper { background: #e9ecef; height: 14px; border-radius: 7px; overflow: hidden; margin: 10px 0; border: 1px solid #dee2e6; }
         .progress-fill { height: 100%; width: 0%; transition: width 0.3s ease-out; }
         .main-fill { background: linear-gradient(90deg, #f1c40f, #f39c12); }
@@ -39,7 +38,7 @@
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬 (全自選)</h1>
+    <h1>屬性強化模擬 (唯一屬性限制)</h1>
 
     <div class="header-bar">
         <span>剩餘機會：<span id="rem">20</span></span>
@@ -50,7 +49,7 @@
         <div class="stat-header">
             <div class="stat-label">
                 主要：
-                <select id="sel-main" onchange="render()"></select>
+                <select id="sel-main" onchange="validateSelection('sel-main')"></select>
             </div>
             <span id="p-main" class="prob-text">-</span>
         </div>
@@ -62,7 +61,7 @@
         <div class="stat-header">
             <div class="stat-label">
                 附加 A：
-                <select id="sel-s1" onchange="render()"></select>
+                <select id="sel-s1" onchange="validateSelection('sel-s1')"></select>
             </div>
             <span id="p-s1" class="prob-text">-</span>
         </div>
@@ -74,7 +73,7 @@
         <div class="stat-header">
             <div class="stat-label">
                 附加 B：
-                <select id="sel-s2" onchange="render()"></select>
+                <select id="sel-s2" onchange="validateSelection('sel-s2')"></select>
             </div>
             <span id="p-s2" class="prob-text">-</span>
         </div>
@@ -91,7 +90,6 @@
 </div>
 
 <script>
-    // 圖片中的完整數據表
     const options = [
         { id: "atk", name: "物理/魔法攻擊力" },
         { id: "dmg", name: "物理/魔法傷害" },
@@ -101,7 +99,7 @@
         { id: "ied", name: "無視防禦率" }
     ];
 
-    const data = {
+    const dataTable = {
         main: {
             atk: [0, 350, 500, 700, 900, 1100, 1400, 1700, 2200, 2700, 3400],
             dmg: [0, "1.9%", "2.7%", "3.8%", "4.9%", "6.0%", "7.6%", "9.2%", "11.9%", "14.6%", "18.4%"],
@@ -121,8 +119,8 @@
     };
 
     let rem = 20, cost = 0, lv = { main: 0, s1: 0, s2: 0 };
+    let lastValues = { 'sel-main': '', 'sel-s1': '', 'sel-s2': '' };
 
-    // 初始化下拉選單
     function initSelects() {
         const ids = ['sel-main', 'sel-s1', 'sel-s2'];
         ids.forEach((id, index) => {
@@ -133,8 +131,25 @@
                 o.text = opt.name;
                 el.appendChild(o);
             });
-            el.selectedIndex = index % options.length; // 預設選不同的
+            el.selectedIndex = index;
+            lastValues[id] = el.value;
         });
+    }
+
+    function validateSelection(changedId) {
+        const ids = ['sel-main', 'sel-s1', 'sel-s2'];
+        const currentEl = document.getElementById(changedId);
+        const otherIds = ids.filter(id => id !== changedId);
+        
+        const isDuplicate = otherIds.some(id => document.getElementById(id).value === currentEl.value);
+
+        if (isDuplicate) {
+            alert("屬性不能重複選取！");
+            currentEl.value = lastValues[changedId];
+        } else {
+            lastValues[changedId] = currentEl.value;
+            render();
+        }
     }
 
     function getLogic(m_lv) {
@@ -158,7 +173,7 @@
 
         const update = (key, curLv, prob, isMain) => {
             const type = document.getElementById('sel-' + key).value;
-            const table = isMain ? data.main : data.sub;
+            const table = isMain ? dataTable.main : dataTable.sub;
             document.getElementById('bar-' + key).style.width = (curLv * 10) + '%';
             document.getElementById('lv-' + key).innerText = `LV ${curLv}`;
             document.getElementById('val-' + key).innerText = `加成: ${table[type][curLv]}`;
@@ -179,16 +194,23 @@
         if (rem <= 0) return;
         const info = getLogic(lv.main);
         const r = Math.random();
-        let target = "";
+        let targetName = "";
         cost += info.cost; rem--;
 
-        if (r < info.mp) { lv.main++; target = "主要屬性"; }
-        else if (r < info.mp + info.sp && lv.s1 < 10) { lv.s1++; target = "附加屬性 A"; }
-        else if (lv.s2 < 10) { lv.s2++; target = "附加屬性 B"; }
+        if (r < info.mp) { 
+            lv.main++; 
+            targetName = options.find(o => o.id === document.getElementById('sel-main').value).name;
+        } else if (r < info.mp + info.sp && lv.s1 < 10) { 
+            lv.s1++; 
+            targetName = options.find(o => o.id === document.getElementById('sel-s1').value).name + " (附加A)";
+        } else if (lv.s2 < 10) { 
+            lv.s2++; 
+            targetName = options.find(o => o.id === document.getElementById('sel-s2').value).name + " (附加B)";
+        }
 
         const item = document.createElement('div');
         item.className = 'log-item';
-        item.innerHTML = `[${20-rem}] 強化 -> <span style="color:#2ecc71">${target}</span> (-${info.cost})`;
+        item.innerHTML = `[${20-rem}] <span style="color:#2ecc71">成功</span> -> ${targetName} (-${info.cost})`;
         document.getElementById('log').prepend(item);
         render();
     }
