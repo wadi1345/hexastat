@@ -8,6 +8,7 @@
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
         h1 { text-align: center; color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
         
+        /* 花費區塊 */
         .header-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .rem-box { grid-column: span 2; text-align: center; border-bottom: 1px solid #57606f; padding-bottom: 8px; margin-bottom: 8px; font-size: 18px; }
         .cost-box { font-size: 14px; display: flex; flex-direction: column; align-items: center; }
@@ -32,8 +33,6 @@
         .btn-quick { background: #3498db; color: white; }
         .btn-reset { background: #eb4d4b; color: white; }
         .btn-clear-total { background: #636e72; color: white; grid-column: span 2; margin-top: 5px; font-size: 12px; padding: 8px; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:disabled { background: #adb5bd; cursor: not-allowed; transform: none; }
 
         .log-area { height: 160px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
         .log-item { border-bottom: 1px solid #444; padding: 3px 0; }
@@ -43,18 +42,12 @@
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬器 v3.2</h1>
+    <h1>屬性強化模擬器 v3.4</h1>
 
     <div class="header-bar">
         <div class="rem-box">剩餘機會：<span id="rem">20</span> / 20</div>
-        <div class="cost-box">
-            <span>本次花費 (隨模擬重置)</span>
-            <span id="cost-current" class="cost-val">0</span>
-        </div>
-        <div class="cost-box">
-            <span>總累積花費 (獨立重置)</span>
-            <span id="cost-total" class="cost-val">0</span>
-        </div>
+        <div class="cost-box"><span>本次花費</span><span id="cost-current" class="cost-val">0</span></div>
+        <div class="cost-box"><span>總累積花費</span><span id="cost-total" class="cost-val">0</span></div>
     </div>
 
     <div class="stat-section" style="border-left-color: #f1c40f;">
@@ -121,7 +114,8 @@
     };
 
     let rem = 20, currentCost = 0, totalCost = 0, lv = { main: 0, s1: 0, s2: 0 };
-    let selHistory = { 'sel-main': 'atk', 'sel-s1': 'dmg', 'sel-s2': 'crit' };
+    // 更新預設值：最大傷害 (max), 最終傷害 (final), 無視防禦率 (ied)
+    let selHistory = { 'sel-main': 'max', 'sel-s1': 'final', 'sel-s2': 'ied' };
 
     function init() {
         ['sel-main', 'sel-s1', 'sel-s2'].forEach((id, i) => {
@@ -151,19 +145,11 @@
         else if (m_lv === 7) { p = 0.15; c = 30; }
         else if (m_lv === 8) { p = 0.10; c = 40; }
         else { p = 0.05; c = 50; }
-        
         if (m_lv >= 10) p = 0;
-        
         let s1ok = lv.s1 < 10, s2ok = lv.s2 < 10;
         let cnt = (s1ok?1:0) + (s2ok?1:0);
         let sp = cnt > 0 ? (1 - p) / cnt : 0;
-        
-        return { 
-            mp: p, 
-            s1p: s1ok ? sp : 0, 
-            s2p: s2ok ? sp : 0, 
-            cost: c 
-        };
+        return { mp: p, s1p: s1ok ? sp : 0, s2p: s2ok ? sp : 0, cost: c };
     }
 
     function render() {
@@ -217,8 +203,6 @@
         } else if (info.s2p > 0) { 
             lv.s2++; 
             hit = "附加B: " + document.getElementById('sel-s2').selectedOptions[0].text; 
-        } else {
-            hit = "強化失敗 (屬性已滿)";
         }
 
         if (!isSilent) {
@@ -235,7 +219,7 @@
         const item = document.createElement('div');
         item.className = 'log-item';
         item.style.color = '#f1c40f';
-        item.innerHTML = `[快速強化] 已跑完所有剩餘次數。`;
+        item.innerHTML = `[快速強化] 已完成本次 20 次強化。`;
         document.getElementById('log').prepend(item);
         render();
     }
