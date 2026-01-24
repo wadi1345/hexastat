@@ -2,13 +2,12 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>屬性強化模擬器 - 完整數據實裝版</title>
+    <title>屬性強化模擬器</title>
     <style>
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
         h1 { text-align: center; color: #1a1a1a; margin-bottom: 20px; font-size: 24px; }
         
-        /* 雙重花費區塊 */
         .header-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .rem-box { grid-column: span 2; text-align: center; border-bottom: 1px solid #57606f; padding-bottom: 8px; margin-bottom: 8px; font-size: 18px; }
         .cost-box { font-size: 14px; display: flex; flex-direction: column; align-items: center; }
@@ -27,7 +26,6 @@
         .value-display { font-size: 13px; color: #636e72; display: flex; justify-content: space-between; font-weight: 500; }
         select { padding: 4px 6px; border-radius: 4px; border: 1px solid #ced4da; font-size: 13px; outline: none; background-color: #f8f9fa; }
 
-        /* 按鈕區 */
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         button { padding: 14px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-up { background: #27ae60; color: white; }
@@ -39,12 +37,13 @@
 
         .log-area { height: 160px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
         .log-item { border-bottom: 1px solid #444; padding: 3px 0; }
+        .full-lv { color: #eb4d4b; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬器 v3.1</h1>
+    <h1>屬性強化模擬器 v3.2</h1>
 
     <div class="header-bar">
         <div class="rem-box">剩餘機會：<span id="rem">20</span> / 20</div>
@@ -137,7 +136,6 @@
         const ids = ['sel-main', 'sel-s1', 'sel-s2'];
         const newVal = document.getElementById(changedId).value;
         const otherId = ids.find(id => id !== changedId && document.getElementById(id).value === newVal);
-
         if (otherId) {
             document.getElementById(otherId).value = selHistory[changedId];
             selHistory[otherId] = document.getElementById(otherId).value;
@@ -153,11 +151,19 @@
         else if (m_lv === 7) { p = 0.15; c = 30; }
         else if (m_lv === 8) { p = 0.10; c = 40; }
         else { p = 0.05; c = 50; }
+        
         if (m_lv >= 10) p = 0;
+        
         let s1ok = lv.s1 < 10, s2ok = lv.s2 < 10;
         let cnt = (s1ok?1:0) + (s2ok?1:0);
         let sp = cnt > 0 ? (1 - p) / cnt : 0;
-        return { mp: p, sp: sp, cost: c };
+        
+        return { 
+            mp: p, 
+            s1p: s1ok ? sp : 0, 
+            s2p: s2ok ? sp : 0, 
+            cost: c 
+        };
     }
 
     function render() {
@@ -166,22 +172,29 @@
         document.getElementById('cost-current').innerText = currentCost.toLocaleString();
         document.getElementById('cost-total').innerText = totalCost.toLocaleString();
 
-        const upRow = (k, cl, pr, isM) => {
-            const type = document.getElementById('sel-' + k).value;
+        const updateUI = (key, cl, pr, isM) => {
+            const type = document.getElementById('sel-' + key).value;
             const table = isM ? dataTable.main : dataTable.sub;
-            document.getElementById('bar-' + k).style.width = (cl * 10) + '%';
-            document.getElementById('lv-' + k).innerText = `LV ${cl}`;
-            
-            // 處理數值顯示，如果是數字則加上千分位
+            const elBar = document.getElementById('bar-' + key);
+            const elLv = document.getElementById('lv-' + key);
+            const elVal = document.getElementById('val-' + key);
+            const elProb = document.getElementById('p-' + key);
+
+            elBar.style.width = (cl * 10) + '%';
+            elLv.innerText = `LV ${cl}`;
+            if (cl >= 10) elLv.classList.add('full-lv'); else elLv.classList.remove('full-lv');
+
             let valStr = table[type][cl];
             if (typeof valStr === 'number') valStr = valStr.toLocaleString();
+            elVal.innerText = `加成: ${valStr}`;
             
-            document.getElementById('val-' + k).innerText = `加成: ${valStr}`;
-            document.getElementById('p-' + k).innerText = `機率: ${(pr * 100).toFixed(1)}%`;
+            elProb.innerText = `機率: ${(pr * 100).toFixed(1)}%`;
+            if (pr === 0) elProb.style.color = "#ccc"; else elProb.style.color = "#0984e3";
         };
-        upRow('main', lv.main, info.mp, true);
-        upRow('s1', lv.s1, info.sp, false);
-        upRow('s2', lv.s2, info.sp, false);
+
+        updateUI('main', lv.main, info.mp, true);
+        updateUI('s1', lv.s1, info.s1p, false);
+        updateUI('s2', lv.s2, info.s2p, false);
 
         const ended = rem <= 0;
         document.getElementById('btn-up').disabled = ended;
@@ -198,12 +211,14 @@
         if (r < info.mp) { 
             lv.main++; 
             hit = document.getElementById('sel-main').selectedOptions[0].text; 
-        } else if (r < info.mp + info.sp && lv.s1 < 10) { 
+        } else if (r < info.mp + info.s1p) { 
             lv.s1++; 
             hit = "附加A: " + document.getElementById('sel-s1').selectedOptions[0].text; 
-        } else if (lv.s2 < 10) { 
+        } else if (info.s2p > 0) { 
             lv.s2++; 
             hit = "附加B: " + document.getElementById('sel-s2').selectedOptions[0].text; 
+        } else {
+            hit = "強化失敗 (屬性已滿)";
         }
 
         if (!isSilent) {
@@ -220,7 +235,7 @@
         const item = document.createElement('div');
         item.className = 'log-item';
         item.style.color = '#f1c40f';
-        item.innerHTML = `[快速強化] 已完成剩餘所有次數。`;
+        item.innerHTML = `[快速強化] 已跑完所有剩餘次數。`;
         document.getElementById('log').prepend(item);
         render();
     }
@@ -232,7 +247,7 @@
     }
 
     function clearTotalCost() {
-        if(confirm("確定要清除「總累積花費」嗎？")) {
+        if(confirm("確定要清除總累積花費嗎？")) {
             totalCost = 0;
             render();
         }
