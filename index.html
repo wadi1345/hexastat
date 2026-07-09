@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>屬性強化模擬器</title>
+    <title>屬性強化模擬器 -V3.5/title>
     <style>
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
@@ -27,29 +27,36 @@
         .value-display { font-size: 13px; color: #636e72; display: flex; justify-content: space-between; font-weight: 500; }
         select { padding: 4px 6px; border-radius: 4px; border: 1px solid #ced4da; font-size: 13px; outline: none; background-color: #f8f9fa; }
 
+        /* 按鈕區 */
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         button { padding: 14px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-up { background: #27ae60; color: white; }
         .btn-quick { background: #3498db; color: white; }
+        .btn-auto { background: #8e44ad; color: white; grid-column: span 2; font-size: 18px; padding: 16px; }
+        .btn-auto:hover { background: #732d91; }
         .btn-reset { background: #eb4d4b; color: white; }
-        .btn-clear-total { background: #636e72; color: white; grid-column: span 2; margin-top: 5px; font-size: 12px; padding: 8px; }
+        .btn-clear-total { background: #636e72; color: white; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { background: #adb5bd; cursor: not-allowed; transform: none; }
 
-        .log-area { height: 160px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
-        .log-item { border-bottom: 1px solid #444; padding: 3px 0; }
+        .log-area { height: 180px; overflow-y: auto; background: #2d3436; color: #f1f2f6; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-top: 20px; }
+        .log-item { border-bottom: 1px solid #444; padding: 4px 0; }
         .full-lv { color: #eb4d4b; }
+        .log-auto { color: #e056fd; font-weight: bold; font-size: 13px; border-bottom: 1px dashed #e056fd; padding: 6px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>屬性強化模擬器 v3.4</h1>
+    <h1>屬性強化模擬器 v3.5</h1>
 
     <div class="header-bar">
         <div class="rem-box">剩餘機會：<span id="rem">20</span> / 20</div>
-        <div class="cost-box"><span>本次花費</span><span id="cost-current" class="cost-val">0</span></div>
+        <div class="cost-box"><span>本次花費 (當輪)</span><span id="cost-current" class="cost-val">0</span></div>
         <div class="cost-box"><span>總累積花費</span><span id="cost-total" class="cost-val">0</span></div>
     </div>
 
+    <!-- 主要屬性 (預設：最大傷害) -->
     <div class="stat-section" style="border-left-color: #f1c40f;">
         <div class="stat-header">
             <div class="stat-label">主要：<select id="sel-main" onchange="swapIfNeeded('sel-main')"></select></div>
@@ -59,6 +66,7 @@
         <div class="value-display"><span id="lv-main">LV 0</span><span id="val-main">加成: 0</span></div>
     </div>
 
+    <!-- 附加 A (預設：最終傷害) -->
     <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
             <div class="stat-label">附加 A：<select id="sel-s1" onchange="swapIfNeeded('sel-s1')"></select></div>
@@ -68,6 +76,7 @@
         <div class="value-display"><span id="lv-s1">LV 0</span><span id="val-s1">加成: 0</span></div>
     </div>
 
+    <!-- 附加 B (預設：無視防禦率) -->
     <div class="stat-section" style="border-left-color: #3498db;">
         <div class="stat-header">
             <div class="stat-label">附加 B：<select id="sel-s2" onchange="swapIfNeeded('sel-s2')"></select></div>
@@ -80,7 +89,8 @@
     <div class="btn-group">
         <button id="btn-up" class="btn-up" onclick="doUpgrade()">單次強化</button>
         <button id="btn-quick" class="btn-quick" onclick="quickUpgrade()">快速強化 20 次</button>
-        <button id="btn-reset" class="btn-reset" onclick="resetSim()">重置模擬</button>
+        <button id="btn-auto" class="btn-auto" onclick="autoUntilMainMax()">⚡ 自動點到主屬 LV10 為止</button>
+        <button id="btn-reset" class="btn-reset" onclick="resetSim()">重置當輪模擬</button>
         <button class="btn-clear-total" onclick="clearTotalCost()">清除總累積花費</button>
     </div>
 
@@ -114,7 +124,6 @@
     };
 
     let rem = 20, currentCost = 0, totalCost = 0, lv = { main: 0, s1: 0, s2: 0 };
-    // 更新預設值：最大傷害 (max), 最終傷害 (final), 無視防禦率 (ied)
     let selHistory = { 'sel-main': 'max', 'sel-s1': 'final', 'sel-s2': 'ied' };
 
     function init() {
@@ -224,9 +233,44 @@
         render();
     }
 
-    function resetSim() {
+    // 自動衝到主屬性 10 級為止
+    function autoUntilMainMax() {
+        let roundCount = 1;
+        let startTotalCost = totalCost;
+        let safetyLimit = 5000; // 防呆機制，避免極端無窮迴圈
+
+        // 如果目前主屬已經是 10，先自動重置一輪新遊戲
+        if (lv.main >= 10 || rem <= 0) {
+            resetSim(true);
+            if (lv.main >= 10) roundCount = 1; 
+        }
+
+        while (lv.main < 10 && roundCount <= safetyLimit) {
+            if (rem <= 0) {
+                resetSim(true); // 靜默重置當輪
+                roundCount++;
+            }
+            doUpgrade(true); // 靜默單次強化
+        }
+
+        let spentForThisTask = totalCost - startTotalCost;
+        const mainName = document.getElementById('sel-main').selectedOptions[0].text;
+
+        // 輸出醒目的統計 Log
+        const item = document.createElement('div');
+        item.className = 'log-auto';
+        item.innerHTML = `⚡ [自動達標] 「${mainName}」已衝至 LV 10！<br>
+                          共經歷 ${roundCount} 輪模擬，本次目標消耗： ${spentForThisTask.toLocaleString()} 碎片。`;
+        document.getElementById('log').prepend(item);
+        
+        render();
+    }
+
+    function resetSim(isSilent = false) {
         rem = 20; currentCost = 0; lv = { main: 0, s1: 0, s2: 0 };
-        document.getElementById('log').innerHTML = '<div class="log-item">模擬已重置。</div>';
+        if (!isSilent) {
+            document.getElementById('log').innerHTML = '<div class="log-item">當輪模擬已重置。</div>';
+        }
         render();
     }
 
